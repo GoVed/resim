@@ -19,14 +19,13 @@ pub fn parse_simulation_file(filename: &str) -> io::Result<(HashMap<String, Reso
 
     let mut iter = lines.into_iter().peekable();
 
-    let mut current_indentation = 0;
     let mut name = String::new();
     while let Some(line) = iter.next() {
         let line = line.trim().to_string();
         if line.is_empty() || line.starts_with('#') || line.chars().all(char::is_whitespace) {
             continue; // Skip empty lines, comments, lines with all whitespaces
         }
-        current_indentation = line.chars().take_while(|&c| c == ' ').count();
+        let current_indentation = line.chars().take_while(|&c| c == ' ').count();
         // Check if it's a resource or process declaration
         if line.ends_with("resource") {
             let resource = parse_resource(&mut iter, current_indentation);
