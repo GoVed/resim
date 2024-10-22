@@ -49,6 +49,22 @@ impl Simulation {
     fn simulate_tick(&mut self) {
     
         // Deduct resources for on_use_processes at the start
+        self.deduct_on_use_processes();
+
+        // Set the amount_used_as_catalyst to 0
+        self.reset_amount_used_as_catalyst();
+    
+        // Decay resources
+        self.decay_resources();
+    
+        // Run processes
+        self.run_processes();
+    
+        // Add back the remaining amount for on_use_processes at the end
+        self.add_back_on_use_processes();
+    }
+
+    fn deduct_on_use_processes(&mut self) {
         for (_, process) in &mut self.on_use_processes {
             let mut feasible = true;
             for (resource_name, amount) in &process.input {
@@ -70,22 +86,38 @@ impl Simulation {
                 process.on_use_accumulate = 0.0;
             }
         }
+    }
 
-        // Set the amount_used_as_catalyst to 0
+    fn reset_amount_used_as_catalyst(&mut self) {
         for (_, resource) in &mut self.resources {
             resource.amount_used_as_catalyst = 0.0;
         }
-    
+    }
+
+    fn add_back_on_use_processes(&mut self) {
+        for (_, process) in &self.on_use_processes {            
+            for (resource_name, amount) in &process.input {
+                if let Some(resource) = self.resources.get_mut(resource_name) {
+                    let addition = -1.0 * amount * process.on_use_accumulate / process.on_use;
+                    resource.amount += addition;
+                }
+            }
+            
+        }
+    }
+
+    fn decay_resources(&mut self) {
+        let now = self.time.timestamp() as u64;
         for (_, resource) in &mut self.resources {
-            // Decay resources
-            let now = self.time.timestamp() as u64;
             while resource.decay_at.len() > 0 && resource.decay_at[0] <= now {
                 resource.amount -= resource.decay_amount[0];
                 resource.decay_at.remove(0);
                 resource.decay_amount.remove(0);
             }
         }
-    
+    }
+
+    fn run_processes(&mut self) {
         for (_, process) in &self.processes {
             if self.can_process_run(process) {
                 for (resource_name, amount) in &process.input {
@@ -112,17 +144,6 @@ impl Simulation {
                     }
                 }
             }
-        }
-    
-        // Add back the remaining amount for on_use_processes at the end
-        for (_, process) in &self.on_use_processes {            
-            for (resource_name, amount) in &process.input {
-                if let Some(resource) = self.resources.get_mut(resource_name) {
-                    let addition = -1.0 * amount * process.on_use_accumulate / process.on_use;
-                    resource.amount += addition;
-                }
-            }
-            
         }
     }
     
