@@ -8,7 +8,7 @@ use chrono::prelude::*;
 
 fn main() {
     // Parse the .reson file
-    let (resources, processes, on_use_processes) = parse_simulation_file("example/simple_pencil.reson").unwrap();
+    let (resources, processes, on_use_processes) = parse_simulation_file("example/food_factory.reson").unwrap();
     println!("Resources: {:#?}", resources);
     println!("Processes: {:#?}", processes);
     // Initialize the simulation
@@ -18,8 +18,8 @@ fn main() {
         chrono::LocalResult::Single(dt) => dt,
         _ => panic!("Invalid time"),
     };
-    // sim.write_every = 86400;
+    sim.write_every = 86400;
     sim.display_state();
-    sim.run(86400*7);
+    sim.run(86400*365*10);
     sim.display_state();
 }

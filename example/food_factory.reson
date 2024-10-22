@@ -1,0 +1,259 @@
+# Money
+cad
+    resource
+    unit count
+    amount 20000
+
+# Flour (supplied daily, used for baking)
+flour
+    resource
+    unit gram
+    max 1000000
+
+flour_intake
+    process
+    use
+        cad 200
+    produce
+        flour 500000
+    period 1 d
+    period_delta 8 h
+    constraint
+        w 1-5
+
+# Sugar (used in both cookies and juice)
+sugar
+    resource
+    unit gram
+    max 300000
+
+sugar_intake
+    process
+    use
+        cad 150
+    produce
+        sugar 100000
+    period 2 d
+    period_delta 9 h
+
+# Water (used in bread, cookies, and juice)
+water
+    resource
+    unit liter
+    max 5000
+
+water_intake
+    process
+    use
+        cad 50
+    produce
+        water 2000
+    period 1 d
+
+# Fruits (used in juice production, delivered weekly)
+fruit
+    resource
+    unit gram
+    max 500000
+
+fruit_intake
+    process
+    use
+        cad 400
+    produce
+        fruit 250000
+    period 1 w
+    period_delta 10 h
+
+# Electricity (constant availability for machines and operations)
+electricity_intake
+    process
+    on_use 5
+    use
+        cad 0.02
+
+# Bread Machine (bakes bread, has a 10-year lifespan, operates from 7am to 5pm)
+bread
+    resource
+    unit loaf
+    max 20000
+
+bread_machine
+    resource
+    unit count
+    max 1
+    life 10 y
+
+bread_machine_intake
+    process
+    use
+        cad 5000
+    produce
+        bread_machine 1
+    period 1 y
+    period_delta 10 h
+
+bread_machine_maintenance
+    process
+    use
+        cad 300
+    period 1 y
+
+# Cookie Machine (produces cookies, has a 7-year lifespan, operates from 8am to 6pm)
+cookie
+    resource
+    unit count
+    max 30000
+
+cookie_machine
+    resource
+    unit count
+    max 1
+    life 7 y
+
+cookie_machine_intake
+    process
+    use
+        cad 4000
+    produce
+        cookie_machine 1
+    period 1 y
+    period_delta 8 h
+
+cookie_machine_maintenance
+    process
+    use
+        cad 200
+    period 1 y
+
+# Juice Machine (produces juice, has a 5-year lifespan, operates from 9am to 4pm)
+juice
+    resource
+    unit liter
+    max 10000
+
+juice_machine
+    resource
+    unit count
+    max 1
+    life 5 y
+
+juice_machine_intake
+    process
+    use
+        cad 3000
+    produce
+        juice_machine 1
+    period 1 y
+    period_delta 9 h
+
+juice_machine_maintenance
+    process
+    use
+        cad 250
+    period 1 y
+
+# Labor (per hour cost for machine operators)
+labor
+    resource
+    unit hour
+    max 1000
+
+labor_intake
+    process
+    use
+        cad 20
+    produce
+        labor 1
+    period 1 h
+    constraint
+        w 1-5
+        h 7-17
+
+# Manufacture Bread (uses flour and water, labor costs)
+manufacture_bread
+    process
+    use
+        electricity_intake 2
+        flour 500
+        water 50
+        labor 0.1
+    produce
+        bread 50
+    catalyze
+        bread_machine 1
+    period 10 m
+    constraint
+        w 1-5
+        h 7-17
+
+# Manufacture Cookies (uses flour, sugar, water, labor costs)
+manufacture_cookies
+    process
+    use
+        electricity_intake 3
+        flour 200
+        sugar 100
+        water 30
+        labor 0.1
+    produce
+        cookie 100
+    catalyze
+        cookie_machine 1
+    period 15 m
+    constraint
+        w 1-5
+        h 8-18
+
+# Manufacture Juice (uses fruit, sugar, water, labor costs)
+manufacture_juice
+    process
+    use
+        electricity_intake 2
+        fruit 1000
+        sugar 50
+        water 100
+        labor 0.1
+    produce
+        juice 100
+    catalyze
+        juice_machine 1
+    period 30 m
+    constraint
+        w 1-5
+        h 9-16
+# Sell Bread (daily sales of bread)
+sell_bread
+    process
+    use
+        bread 1000
+    produce
+        cad 500
+    period 3 h
+    constraint
+        w 1-5
+        h 7-17
+
+# Sell Cookies (daily sales of cookies)
+sell_cookies
+    process
+    use
+        cookie 2000
+    produce
+        cad 400
+    period 4 h
+    constraint
+        w 1-5
+        h 8-18
+
+# Sell Juice (daily sales of juice)
+sell_juice
+    process
+    use
+        juice 500
+    produce
+        cad 300
+    period 5 h
+    constraint
+        w 1-5
+        h 9-16

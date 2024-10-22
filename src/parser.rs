@@ -180,7 +180,7 @@ fn parse_time_string(num:&str, period:&str) -> u64{
         "d" => num * 86400,
         "w" => num * 604800,
         "y" => num * 31557600,
-        _ => panic!("Invalid time string"),
+        _ => panic!("Invalid time string {}", period),
     }
 }
 
