@@ -47,10 +47,30 @@ impl Simulation {
     }
 
     fn simulate_tick(&mut self) {
-        // Reset on_use_accumulate for all processes
+    
+        // Deduct resources for on_use_processes at the start
         for (_, process) in &mut self.on_use_processes {
-            process.on_use_accumulate = 0.0;
+            let mut feasible = true;
+            for (resource_name, amount) in &process.input {
+                if let Some(resource) = self.resources.get_mut(resource_name) {
+                    if resource.amount < *amount {
+                        feasible = false;
+                        break;
+                    }
+                }
+            }
+            if feasible {
+                for (resource_name, amount) in &process.input {
+                    if let Some(resource) = self.resources.get_mut(resource_name) {
+                        resource.amount -= amount;
+                    }
+                }
+                process.on_use_accumulate = -1.0 * process.on_use;
+            } else {
+                process.on_use_accumulate = 0.0;
+            }
         }
+    
         for (_, resource) in &mut self.resources {
             // Decay resources
             let now = self.time.timestamp() as u64;
@@ -58,20 +78,19 @@ impl Simulation {
                 resource.amount -= resource.decay_amount[0];
                 resource.decay_at.remove(0);
                 resource.decay_amount.remove(0);
-                
             }
         }
+    
         for (_, process) in &self.processes {
             if self.can_process_run(process) {
                 for (resource_name, amount) in &process.input {
                     if let Some(resource) = self.resources.get_mut(resource_name) {
                         resource.amount -= amount;
-                    }
-                    else if let Some(resource) = self.on_use_processes.get_mut(resource_name) {
-                        resource.on_use_accumulate += amount;                        
+                    } else if let Some(resource) = self.on_use_processes.get_mut(resource_name) {
+                        resource.on_use_accumulate += amount;
                     }
                 }
-        
+    
                 // Add output resources
                 for (resource_name, amount) in &process.output {
                     if let Some(resource) = self.resources.get_mut(resource_name) {
@@ -84,19 +103,19 @@ impl Simulation {
                 }
             }
         }
-        for (_, process) in &self.on_use_processes {
-            if process.on_use_accumulate >= 0.0 {
-                for (resource_name, amount) in &process.input {
-                    if let Some(resource) = self.resources.get_mut(resource_name) {
-                        resource.amount -= amount * process.on_use_accumulate / process.on_use;
-                        if resource.amount < 0.0 {
-                            println!("Resource {} has gone negative", resource_name);
-                        }
-                    }
+    
+        // Add back the remaining amount for on_use_processes at the end
+        for (_, process) in &self.on_use_processes {            
+            for (resource_name, amount) in &process.input {
+                if let Some(resource) = self.resources.get_mut(resource_name) {
+                    let addition = -1.0 * amount * process.on_use_accumulate / process.on_use;
+                    resource.amount += addition;
                 }
             }
+            
         }
     }
+    
 
     fn can_process_run(&self, process: &Process) -> bool {
         // Check if the time is right for the process along with the constraints
@@ -110,12 +129,11 @@ impl Simulation {
                     return false;
                 }
             } else if let Some(on_use_process) = self.on_use_processes.get(resource_name) {
-                if on_use_process.on_use_accumulate + *amount >= on_use_process.on_use {
+                if on_use_process.on_use_accumulate + *amount > 0.0 {
                     return false;
                 }
             } else {
-                return false;
-                
+                return false;                
             }
         }
         // Check if the process has enough catalyst resources

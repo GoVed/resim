@@ -41,7 +41,6 @@ electirc_intake
     on_use 3
     use
         cad 0.01
-    period 1 s
     
 # Manufacturing machine utilies 0.7 watt per second which costs 10000 and runs for 5 years. machine runs on weekdays from 10am to 4pm
 pencil
