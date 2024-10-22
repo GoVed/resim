@@ -17,11 +17,23 @@ fn main() {
     let default_write_every = 3600;
     let default_run_for = 86400 * 31;
 
-    // Parse command line arguments
-    let reson_file = args.get(1).unwrap_or(&default_reson_file);
-    let start_time = args.get(2).map_or(default_start_time, |s| DateTime::parse_from_rfc3339(s).unwrap().with_timezone(&Utc));
-    let write_every = args.get(3).map_or(default_write_every, |s| s.parse().unwrap());
-    let run_for = args.get(4).map_or(default_run_for, |s| s.parse().unwrap());
+    // Parse command line arguments with keywords
+    let mut reson_file = default_reson_file.clone();
+    let mut start_time = default_start_time;
+    let mut write_every = default_write_every;
+    let mut run_for = default_run_for;
+
+    for arg in &args[1..] {
+        if let Some((key, value)) = arg.split_once('=') {
+            match key {
+                "reson_file" => reson_file = value.to_string(),
+                "start_time" => start_time = DateTime::parse_from_rfc3339(value).unwrap().with_timezone(&Utc),
+                "write_every" => write_every = value.parse().unwrap(),
+                "run_for" => run_for = value.parse().unwrap(),
+                _ => eprintln!("Unknown argument: {}", key),
+            }
+        }
+    }
 
     // Parse the .reson file
     let (resources, processes, on_use_processes) = parse_simulation_file(reson_file).unwrap();
