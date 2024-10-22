@@ -177,7 +177,7 @@ manufacture_bread
         electricity_intake 2
         flour 500
         water 50
-        labor 0.1
+        labor 0.35
     produce
         bread 50
     catalyze
@@ -195,7 +195,7 @@ manufacture_cookies
         flour 200
         sugar 100
         water 30
-        labor 0.1
+        labor 0.3
     produce
         cookie 100
     catalyze
@@ -222,7 +222,7 @@ manufacture_juice
     constraint
         w 1-5
         h 9-16
-        
+
 # Sell Bread (daily sales of bread)
 sell_bread
     process
