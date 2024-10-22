@@ -222,6 +222,7 @@ manufacture_juice
     constraint
         w 1-5
         h 9-16
+        
 # Sell Bread (daily sales of bread)
 sell_bread
     process

@@ -20,6 +20,6 @@ fn main() {
     };
     sim.write_every = 86400;
     sim.display_state();
-    sim.run(86400*365*10);
+    sim.run(86400*365);
     sim.display_state();
 }

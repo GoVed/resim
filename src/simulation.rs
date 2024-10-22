@@ -1,6 +1,6 @@
 use std::time;
 use std::collections::HashMap;
-use crate::resource::{Resource, Process};
+use crate::resource::{Process, Resource};
 use chrono::prelude::*;
 pub struct Simulation {
     pub resources: HashMap<String, Resource>,
@@ -70,6 +70,11 @@ impl Simulation {
                 process.on_use_accumulate = 0.0;
             }
         }
+
+        // Set the amount_used_as_catalyst to 0
+        for (_, resource) in &mut self.resources {
+            resource.amount_used_as_catalyst = 0.0;
+        }
     
         for (_, resource) in &mut self.resources {
             // Decay resources
@@ -88,6 +93,11 @@ impl Simulation {
                         resource.amount -= amount;
                     } else if let Some(resource) = self.on_use_processes.get_mut(resource_name) {
                         resource.on_use_accumulate += amount;
+                    }
+                }
+                for (resource_name, amount) in &process.catalyst {
+                    if let Some(resource) = self.resources.get_mut(resource_name) {
+                        resource.amount_used_as_catalyst += amount;
                     }
                 }
     
@@ -128,7 +138,7 @@ impl Simulation {
         // Check if the process has enough input resources
         for (resource_name, amount) in &process.input {
             if let Some(resource) = self.resources.get(resource_name) {
-                if resource.amount < *amount {
+                if resource.amount - resource.amount_used_as_catalyst < *amount {
                     return false;
                 }
             } else if let Some(on_use_process) = self.on_use_processes.get(resource_name) {
@@ -142,7 +152,7 @@ impl Simulation {
         // Check if the process has enough catalyst resources
         for (resource_name, amount) in &process.catalyst {
             if let Some(resource) = self.resources.get(resource_name) {
-                if resource.amount < *amount {
+                if resource.amount - resource.amount_used_as_catalyst < *amount {
                     return false;
                 }
             } else {

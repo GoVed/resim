@@ -7,7 +7,8 @@ pub struct Resource {
     pub amount: f64,
     pub life: u64,
     pub decay_at: Vec<u64>,
-    pub decay_amount: Vec<f64>
+    pub decay_amount: Vec<f64>,
+    pub amount_used_as_catalyst: f64,
 }
 
 impl Default for Resource {
@@ -18,7 +19,8 @@ impl Default for Resource {
             amount: 0.0,
             life: 0,
             decay_at: Vec::new(),
-            decay_amount: Vec::new()
+            decay_amount: Vec::new(),
+            amount_used_as_catalyst: 0.0,
         }
     }
 }
