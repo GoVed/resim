@@ -1,4 +1,4 @@
-use core::time;
+use std::time;
 use std::collections::HashMap;
 use crate::resource::{Resource, Process};
 use chrono::prelude::*;
@@ -33,6 +33,7 @@ impl Simulation {
     }
 
     pub fn run(&mut self, duration: u64) {
+        let start_time_nanoseconds = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos();
         for time_in_s in 0..duration {
             self.simulate_tick();
             //Adding one second to the time
@@ -41,6 +42,8 @@ impl Simulation {
                 self.write_current_state_to_csv();
             }
         }
+        let end_time_nanoseconds = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos();
+        println!("Simulation took {} seconds", (end_time_nanoseconds - start_time_nanoseconds) as f64 / 1_000_000_000.0);
     }
 
     fn simulate_tick(&mut self) {
