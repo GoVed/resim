@@ -1,0 +1,88 @@
+# Money
+cad
+    resource
+    unit count
+    amount 10000
+
+# Wood is supplied 30kg every workday at 9am and storage capcity is 100 kgs. Cost is 50 CAD.
+wood
+    resource
+    unit gram
+    max 100000
+
+wood_intake
+    process
+    use
+        cad 50
+    produce
+        wood 30000
+    period 1 d 
+    period_delta 9 h
+    constraint mon-fri
+
+# Graphite is supplied 100 kg on every monday 9 am and storage capacity is 500 kgs. Cost is 100 CAD.
+graphite
+    resource
+    unit gram
+    max 500000
+
+graphite_intake
+    process
+    use
+        cad 100
+    produce 
+        graphite 100000
+    period 1 w 
+    period_delta 9 h
+
+# Electricity is available 24/7 which costs 0.01/watt and is 3 watt/second is available. There is no storage constraint. However we get new electricity every second
+electirc_intake
+    process
+    on_use 3
+    use
+        cad 0.01
+    period 1 s
+    
+# Manufacturing machine utilies 0.7 watt per second which costs 10000 and runs for 5 years. machine runs on weekdays from 10am to 4pm
+pencil
+    resource
+    unit count
+    max 50000
+
+pencil_machine
+    resource
+    unit count
+    max 2
+    life 5 y
+
+pencil_machine_intake
+    process
+    use
+        cad 9000
+    produce
+        pencil_machine 1
+    period 1 y 
+    period_delta 9 h
+    
+manufacture_pencil
+    process
+    use
+        electirc_intake 0.7 
+        wood 10
+        graphite 2
+    produce
+        pencil 10
+    catalyze
+        pencil_machine 1
+    period 1 s
+    constraint mon-fri 10h-16h
+
+sell_pencil
+    process
+    use
+        pencil 10000
+    produce
+        cad 50
+    period 3 h
+    constraint mon-fri 10h-16h
+
