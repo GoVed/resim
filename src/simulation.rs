@@ -23,7 +23,7 @@ impl Simulation {
         };
 
         // Write the headers to the CSV file
-        let mut headers = vec!["timestamp".to_string()];
+        let mut headers = vec!["time".to_string()];
         for resource_name in sim.resources.keys() {
             headers.push(resource_name.clone());
         }
@@ -122,6 +122,9 @@ impl Simulation {
         if !self.time_period_check(process.period, process.period_delta) {
             return false;
         }
+        if !self.constraint_check(&process.constraint, &process.constraint_modulo) {
+            return false;
+        }
         // Check if the process has enough input resources
         for (resource_name, amount) in &process.input {
             if let Some(resource) = self.resources.get(resource_name) {
@@ -165,6 +168,26 @@ impl Simulation {
         }
         false
     }
+
+    fn constraint_check(&self, constraint: &Vec<Vec<[u64;2]>>, constraint_modulo: &Vec<u64>) -> bool {
+        let now = self.time.timestamp() as u64;
+        for (i, constraint_list) in constraint.iter().enumerate() {
+            let modulo = constraint_modulo[i];
+            let mut feasible_for_this_modulo = false;
+            let time_to_check = now % modulo;
+            for [start, end] in constraint_list {
+                if (*start <= *end && time_to_check >= *start && time_to_check <= *end) ||
+                   (*start > *end && (time_to_check >= *start || time_to_check <= *end)) {
+                    feasible_for_this_modulo = true;
+                    break;
+                }
+            }
+            if !feasible_for_this_modulo {
+                return false;
+            }
+        }
+        true
+    }
     
     pub fn display_state(&self) {
         println!("Current state of resources at time {}s:", self.time);
@@ -181,7 +204,7 @@ impl Simulation {
 
     fn write_current_state_to_csv(&mut self) {
         // timestamp, resource_0_amount, resource_1_amount, ...
-        let mut record = vec![self.time.timestamp().to_string()];
+        let mut record = vec![self.time.to_string()];
         for resource in self.resources.values() {
             record.push(resource.amount.to_string());
         }

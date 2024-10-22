@@ -30,7 +30,8 @@ pub struct Process {
     pub catalyst: HashMap<String, f64>,
     pub period: u64,
     pub period_delta: u64,
-    pub constraint: String,
+    pub constraint: Vec<Vec<[u64;2]>>,
+    pub constraint_modulo: Vec<u64>,
     pub on_use: f64,
     pub on_use_accumulate: f64
 }

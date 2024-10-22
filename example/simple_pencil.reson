@@ -18,7 +18,8 @@ wood_intake
         wood 30000
     period 1 d 
     period_delta 9 h
-    constraint mon-fri
+    constraint
+        w 1-5
 
 # Graphite is supplied 100 kg on every monday 9 am and storage capacity is 500 kgs. Cost is 100 CAD.
 graphite
@@ -74,7 +75,9 @@ manufacture_pencil
     catalyze
         pencil_machine 1
     period 1 s
-    constraint mon-fri 10h-16h
+    constraint 
+        w 1-5
+        h 10-16
 
 sell_pencil
     process
@@ -83,5 +86,6 @@ sell_pencil
     produce
         cad 50
     period 3 h
-    constraint mon-fri 10h-16h
-
+    constraint 
+        w 1-5
+        h 10-16

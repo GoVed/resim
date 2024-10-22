@@ -124,9 +124,15 @@ where
             }
             "period_delta" => {
                 process.period_delta = parse_time_string(tokens[1], tokens[2]);
+                if process.period == 604800 {
+                    process.period_delta += 4 * 86400;
+                    process.period_delta %= 604800;
+                }
             }
             "constraint" => {
-                process.constraint = tokens[1..].join(" ");
+                let (constraint, constraint_modulo) = parse_constraint(&mut *iter, line_indentation);
+                process.constraint = constraint;
+                process.constraint_modulo = constraint_modulo;
             }
             "on_use" => {
                 process.on_use = tokens[1].parse().unwrap();
@@ -176,4 +182,66 @@ fn parse_time_string(num:&str, period:&str) -> u64{
         "y" => num * 31557600,
         _ => panic!("Invalid time string"),
     }
+}
+
+fn parse_constraint<I>(iter: &mut Peekable<I>, start_indentation: usize) -> (Vec<Vec<[u64;2]>>, Vec<u64>)
+where
+    I: Iterator<Item = String>,
+{
+    let mut constraint: Vec<Vec<[u64;2]>> = Vec::new();
+    let mut constraint_modulo: Vec<u64> = Vec::new();
+    while let Some(line) = iter.peek() {
+        if line.is_empty() || line.starts_with('#') || line.chars().all(char::is_whitespace) {
+            iter.next(); // Skip empty lines, comments, lines with all whitespaces
+            continue;
+        }
+        let line_indentation = line.chars().take_while(|&c| c == ' ').count();
+        if line_indentation <= start_indentation {
+            return (constraint, constraint_modulo);
+        }
+        let line = iter.next().unwrap().trim().to_string();
+        let tokens: Vec<&str> = line.split_whitespace().collect();
+        let mut ranges: Vec<[u64;2]> = Vec::new();
+        let mut multiplier = 0;
+        let mut delta = 0;
+        match tokens[0] {
+            "s" => {
+                constraint_modulo.push(60);
+                multiplier = 1;
+            }
+            "m" => {
+                constraint_modulo.push(3600);
+                multiplier = 60;
+            }
+            "h" => {
+                constraint_modulo.push(86400);
+                multiplier = 3600;
+            }
+            "w" => {
+                constraint_modulo.push(604800);
+                multiplier = 86400;
+                // Jan 1 1970 was a Thursday
+                delta = 4;
+            }
+            _ => {
+                println!("Unknown token: {}", tokens[0]);
+            }
+            
+        }
+        for i in 1..tokens.len() {
+            let mut range: [u64; 2] = [0, 0];
+            let range_tokens: Vec<&str> = tokens[i].split('-').collect();
+            range[0] = (range_tokens[0].parse::<u64>().unwrap() + delta) * multiplier;
+            if range_tokens.len() == 1 {
+            range[1] = range[0] + multiplier - 1;
+            } else {
+            range[1] = ((range_tokens[1].parse::<u64>().unwrap() + 1) + delta) * multiplier - 1;
+            }
+            range[0] %= constraint_modulo.last().unwrap();
+            range[1] %= constraint_modulo.last().unwrap();
+            ranges.push(range);
+        }
+        constraint.push(ranges);
+    }
+    (constraint, constraint_modulo)
 }

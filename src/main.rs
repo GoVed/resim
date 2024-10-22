@@ -9,7 +9,8 @@ use chrono::prelude::*;
 fn main() {
     // Parse the .reson file
     let (resources, processes, on_use_processes) = parse_simulation_file("example/simple_pencil.reson").unwrap();
-    
+    println!("Resources: {:#?}", resources);
+    println!("Processes: {:#?}", processes);
     // Initialize the simulation
     let mut sim = Simulation::new(resources, processes, on_use_processes);
     // Setting the simulation time to 1st January 2024
