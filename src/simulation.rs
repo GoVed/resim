@@ -8,6 +8,7 @@ pub struct Simulation {
     pub on_use_processes: HashMap<String, Process>,
     pub time: DateTime<Utc>,
     pub csv_writer: csv::Writer<std::fs::File>,
+    pub write_every: u64,
 }
 
 impl Simulation {
@@ -18,6 +19,7 @@ impl Simulation {
             on_use_processes: on_use_processes,
             time: Utc::now(),
             csv_writer: csv::Writer::from_path("output.csv").unwrap(),
+            write_every: 1,
         };
 
         // Write the headers to the CSV file
@@ -31,10 +33,13 @@ impl Simulation {
     }
 
     pub fn run(&mut self, duration: u64) {
-        for _ in 0..duration {
+        for time_in_s in 0..duration {
             self.simulate_tick();
             //Adding one second to the time
             self.time = self.time + chrono::Duration::seconds(1);
+            if time_in_s % self.write_every == 0 {
+                self.write_current_state_to_csv();
+            }
         }
     }
 
@@ -88,7 +93,6 @@ impl Simulation {
                 }
             }
         }
-        self.write_current_state_to_csv();
     }
 
     fn can_process_run(&self, process: &Process) -> bool {

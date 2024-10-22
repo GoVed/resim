@@ -17,7 +17,8 @@ fn main() {
         chrono::LocalResult::Single(dt) => dt,
         _ => panic!("Invalid time"),
     };
+    sim.write_every = 86400;
     sim.display_state();
-    sim.run(86400*365);
+    sim.run(86400*3650);
     sim.display_state();
 }
