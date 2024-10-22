@@ -1,18 +1,18 @@
 use crate::resource::{Resource, Process};
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 use std::iter::Peekable;
 
-pub fn parse_simulation_file(filename: &str) -> io::Result<(HashMap<String, Resource>, HashMap<String, Process>, HashMap<String, Process>)> {
+pub fn parse_simulation_file(filename: &str) -> io::Result<(IndexMap<String, Resource>, IndexMap<String, Process>, IndexMap<String, Process>)> {
     let path = Path::new(filename);
     let file = File::open(&path)?;
     let reader = io::BufReader::new(file);
 
-    let mut resources = HashMap::new();
-    let mut processes = HashMap::new();
-    let mut on_use_processes = HashMap::new();
+    let mut resources = IndexMap::new();
+    let mut processes = IndexMap::new();
+    let mut on_use_processes = IndexMap::new();
     
     // Collect all lines from the file into a vector so we can process them multiple times
     let lines: Vec<String> = reader.lines().collect::<Result<_, _>>()?;
@@ -145,7 +145,7 @@ where
     process
 }
 
-fn parse_resource_list<I>(iter: &mut Peekable<I>, start_indentation: usize, hashmap_to_add: &mut HashMap<String, f64>)
+fn parse_resource_list<I>(iter: &mut Peekable<I>, start_indentation: usize, indexmap_to_add: &mut IndexMap<String, f64>)
 where
     I: Iterator<Item = String>,
 {
@@ -163,7 +163,7 @@ where
         if tokens.len() == 2 {
             let key = tokens[0].to_string();
             let value: f64 = tokens[1].parse().unwrap();
-            hashmap_to_add.insert(key, value);
+            indexmap_to_add.insert(key, value);
         } else {
             println!("Invalid resource list entry: {}", line);
         }
@@ -220,7 +220,7 @@ where
                 constraint_modulo.push(604800);
                 multiplier = 86400;
                 // Jan 1 1970 was a Thursday
-                delta = 4;
+                delta = 3;
             }
             _ => {
                 println!("Unknown token: {}", tokens[0]);

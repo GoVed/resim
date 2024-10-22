@@ -1,18 +1,18 @@
 use std::time;
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use crate::resource::{Process, Resource};
 use chrono::prelude::*;
 pub struct Simulation {
-    pub resources: HashMap<String, Resource>,
-    pub processes: HashMap<String, Process>,
-    pub on_use_processes: HashMap<String, Process>,
+    pub resources: IndexMap<String, Resource>,
+    pub processes: IndexMap<String, Process>,
+    pub on_use_processes: IndexMap<String, Process>,
     pub time: DateTime<Utc>,
     pub csv_writer: csv::Writer<std::fs::File>,
     pub write_every: u64,
 }
 
 impl Simulation {
-    pub fn new(resources:HashMap<String, Resource>, processes:HashMap<String, Process>, on_use_processes:HashMap<String,Process>) -> Self {
+    pub fn new(resources:IndexMap<String, Resource>, processes:IndexMap<String, Process>, on_use_processes:IndexMap<String,Process>) -> Self {
         let mut sim  = Simulation {
             resources: resources,
             processes: processes,

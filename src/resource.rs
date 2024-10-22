@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 
 #[derive(Debug)]
 pub struct Resource {
@@ -27,9 +27,9 @@ impl Default for Resource {
 
 #[derive(Default, Debug, Clone)]
 pub struct Process {
-    pub input: HashMap<String, f64>,
-    pub output: HashMap<String, f64>,
-    pub catalyst: HashMap<String, f64>,
+    pub input: IndexMap<String, f64>,
+    pub output: IndexMap<String, f64>,
+    pub catalyst: IndexMap<String, f64>,
     pub period: u64,
     pub period_delta: u64,
     pub constraint: Vec<Vec<[u64;2]>>,

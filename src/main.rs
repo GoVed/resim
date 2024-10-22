@@ -36,7 +36,7 @@ fn main() {
     }
 
     // Parse the .reson file
-    let (resources, processes, on_use_processes) = parse_simulation_file(reson_file).unwrap();
+    let (resources, processes, on_use_processes) = parse_simulation_file(&reson_file).unwrap();
     println!("Resources: {:#?}", resources);
     println!("Processes: {:#?}", processes);
 
