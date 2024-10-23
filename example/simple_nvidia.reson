@@ -1,0 +1,301 @@
+# Money
+usd
+    resource
+    unit count
+    amount 20000000
+
+# Silicon (raw material used in chips, supplied weekly)
+silicon
+    resource
+    unit gram
+    max 1000000
+
+silicon_intake
+    process
+    use
+        usd 20000
+    produce
+        silicon 500000
+    period 1 w
+    period_delta 9 h
+    constraint
+        w 1-5
+
+# Work Seconds (work per second by 400 employees)
+work_second
+    resource
+    unit work_second
+    max 800
+    life 1 s
+
+work_second_intake
+    process
+    use
+        usd 5
+    produce
+        work_second 400
+    period 1 s
+    constraint
+        w 1-5
+        h 9-17
+
+# Electricity (constant supply for manufacturing)
+electricity_intake
+    process
+    on_use 5
+    use
+        usd 0.01
+
+# Transistors (used in GPU, AI chip, and console production)
+transistor
+    resource
+    unit count
+    max 100000000
+
+transistor_manufacture
+    process
+    use
+        electricity_intake 0.03
+        silicon 2
+        work_second 2
+    produce
+        transistor 20000
+    period 1 s
+    constraint
+        w 1-5
+
+# Memory Chips (used in GPU, AI chip, and consoles)
+memory_chip
+    resource
+    unit count
+    max 100000
+
+memory_chip_manufacture
+    process
+    use
+        electricity_intake 0.015
+        silicon 1
+        work_second 1.5
+    produce
+        memory_chip 2000
+    period 1 s
+    constraint
+        w 1-5
+
+# AI Chips (high-performance AI processors, uses transistors and memory)
+untested_ai_chip
+    resource
+    unit count
+    max 5000
+
+ai_chip_assembly
+    process
+    use
+        electricity_intake 0.05
+        transistor 1000
+        memory_chip 4
+        work_second 3.75
+    produce
+        untested_ai_chip 5
+    period 1 s
+    constraint
+        w 1-5
+
+ai_chip
+    resource
+    unit count
+    max 5000
+
+# GPUs (for gaming and AI tasks, uses transistors and memory chips)
+untested_gpu
+    resource
+    unit count
+    max 5000
+
+gpu_assembly
+    process
+    use
+        electricity_intake 0.07
+        transistor 1600
+        memory_chip 6
+        work_second 5
+    produce
+        untested_gpu 10
+    period 1 s
+    constraint
+        w 1-5
+
+gpu
+    resource
+    unit count
+    max 5000
+
+# Gaming Consoles (uses GPU, transistors, and memory chips)
+untested_console
+    resource
+    unit count
+    max 3000
+
+console_assembly
+    process
+    use
+        electricity_intake 0.1
+        untested_gpu 0.2
+        transistor 600
+        memory_chip 10
+        work_second 7.5
+    produce
+        untested_console 1
+    period 1 s
+    constraint
+        w 1-5
+
+gaming_console
+    resource
+    unit count
+    max 3000
+
+# Testing Process for GPUs, AI Chips, and Consoles
+testing_facility
+    resource
+    unit count
+    max 2
+    life 10 y
+    maintenance 100000 usd/y
+
+testing_facility_construction
+    process
+    use
+        usd 1000000
+    produce
+        testing_facility 1
+    period 6 m
+
+# GPU Testing
+gpu_testing
+    process
+    use
+        untested_gpu 10
+        electricity_intake 0.015
+        work_second 2
+    produce
+        gpu 9.5
+    catalyze
+        testing_facility 1
+    period 1 s
+    constraint
+        w 1-5
+        h 9-17
+
+# AI Chip Testing
+ai_chip_testing
+    process
+    use
+        untested_ai_chip 5
+        electricity_intake 0.02
+        work_second 2.5
+    produce
+        ai_chip 4.8
+    catalyze
+        testing_facility 1
+    period 1 s
+    constraint
+        w 1-5
+        h 9-17
+
+# Console Testing
+console_testing
+    process
+    use
+        untested_console 1
+        electricity_intake 0.03
+        work_second 3
+    produce
+        gaming_console 0.95
+    catalyze
+        testing_facility 1
+    period 1 s
+    constraint
+        w 1-5
+        h 9-17
+
+# Storage for Finished Products
+gpu_in_storage
+    resource
+    unit count
+    max 5000
+
+ai_chip_in_storage
+    resource
+    unit count
+    max 5000
+
+console_in_storage
+    resource
+    unit count
+    max 3000
+
+# GPU Storage Process
+gpu_storage
+    process
+    use
+        gpu 10
+    produce
+        gpu_in_storage 10
+    period 1 m
+
+# AI Chip Storage Process
+ai_chip_storage
+    process
+    use
+        ai_chip 5
+    produce
+        ai_chip_in_storage 5
+    period 1 m
+
+# Console Storage Process
+console_storage
+    process
+    use
+        gaming_console 1
+    produce
+        console_in_storage 1
+    period 1 m
+
+# Sales of Finished Products
+sell_gpu
+    process
+    use
+        gpu_in_storage 500
+    produce
+        usd 20000
+    period 1 h
+    constraint
+        w 1-5
+        h 9-17
+
+sell_ai_chip
+    process
+    use
+        ai_chip_in_storage 500
+    produce
+        usd 300000
+    period 1 h
+    constraint
+        w 1-5
+        h 9-17
+
+sell_console
+    process
+    use
+        console_in_storage 100
+    produce
+        usd 50000
+    period 3 h
+    constraint
+        w 1-5
+        h 9-17
+
+
+
+
