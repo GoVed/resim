@@ -9,6 +9,7 @@ pub struct Simulation {
     pub time: DateTime<Utc>,
     pub csv_writer: csv::Writer<std::fs::File>,
     pub write_every: u64,
+    pub last_write_time: u64,
 }
 
 impl Simulation {
@@ -20,11 +21,15 @@ impl Simulation {
             time: Utc::now(),
             csv_writer: csv::Writer::from_path("output.csv").unwrap(),
             write_every: 1,
+            last_write_time: 0,
         };
 
         // Write the headers to the CSV file
         let mut headers = vec!["time".to_string()];
         for resource_name in sim.resources.keys() {
+            headers.push(resource_name.clone() + "_min");
+            headers.push(resource_name.clone() + "_avg");
+            headers.push(resource_name.clone() + "_max");
             headers.push(resource_name.clone());
         }
         for process_name in sim.on_use_processes.keys() {
@@ -33,6 +38,11 @@ impl Simulation {
         sim.csv_writer.write_record(&headers).unwrap();
 
         sim
+    }
+
+    pub fn set_start_time(&mut self, time: DateTime<Utc>) {
+        self.time = time;
+        self.last_write_time = time.timestamp() as u64;
     }
 
     pub fn run(&mut self, duration: u64) {
@@ -64,6 +74,21 @@ impl Simulation {
     
         // Add back the remaining amount for on_use_processes at the end
         self.add_back_on_use_processes();
+
+        // Update the min, max and avg values for resources
+        self.update_resource_min_max_avg();
+    }
+
+    fn update_resource_min_max_avg(&mut self) {
+        for resource in self.resources.values_mut() {
+            if resource.amount < resource.resource_min_for_writer {
+                resource.resource_min_for_writer = resource.amount;
+            }
+            if resource.amount > resource.resource_max_for_writer {
+                resource.resource_max_for_writer = resource.amount;
+            }
+            resource.resource_avg_for_writer += resource.amount;
+        }
     }
 
     fn deduct_on_use_processes(&mut self) {
@@ -272,13 +297,20 @@ impl Simulation {
     fn write_current_state_to_csv(&mut self) {
         // timestamp, resource_0_amount, resource_1_amount, ...
         let mut record = vec![self.time.to_string()];
-        for resource in self.resources.values() {
+        for resource in self.resources.values_mut() {
+            record.push(resource.resource_min_for_writer.to_string());
+            record.push((resource.resource_avg_for_writer / (self.time.timestamp() as f64 - self.last_write_time as f64)).to_string());
+            record.push(resource.resource_max_for_writer.to_string());
             record.push(resource.amount.to_string());
+            resource.resource_min_for_writer = f64::MAX;
+            resource.resource_max_for_writer = 0.0;
+            resource.resource_avg_for_writer = 0.0;
         }
         for process in self.on_use_processes.values_mut() {
             record.push(process.on_use_accumulate_for_writer.to_string());
             process.on_use_accumulate_for_writer = 0.0;
         }
         self.csv_writer.write_record(&record).unwrap();
+        self.last_write_time = self.time.timestamp() as u64;
     }
 }

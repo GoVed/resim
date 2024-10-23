@@ -9,6 +9,9 @@ pub struct Resource {
     pub decay_at: Vec<u64>,
     pub decay_amount: Vec<f64>,
     pub amount_used_as_catalyst: f64,
+    pub resource_min_for_writer: f64,
+    pub resource_max_for_writer: f64,
+    pub resource_avg_for_writer: f64,
 }
 
 impl Default for Resource {
@@ -21,6 +24,9 @@ impl Default for Resource {
             decay_at: Vec::new(),
             decay_amount: Vec::new(),
             amount_used_as_catalyst: 0.0,
+            resource_min_for_writer: f64::MAX,
+            resource_max_for_writer: 0.0,
+            resource_avg_for_writer: 0.0,
         }
     }
 }

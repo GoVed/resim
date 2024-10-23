@@ -46,7 +46,7 @@ fn main() {
     let mut sim = Simulation::new(resources, processes, on_use_processes);
 
     // Setting the simulation time
-    sim.time = start_time;
+    sim.set_start_time(start_time);
 
     sim.write_every = write_every;
     sim.display_state();
