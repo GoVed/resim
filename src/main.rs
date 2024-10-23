@@ -25,12 +25,14 @@ fn main() {
 
     for arg in &args[1..] {
         if let Some((key, value)) = arg.split_once('=') {
+            let key = key.trim();
+            let value = value.trim();
             match key {
-                "reson_file" => reson_file = value.to_string(),
-                "start_time" => start_time = DateTime::parse_from_rfc3339(value).unwrap().with_timezone(&Utc),
-                "write_every" => write_every = value.parse().unwrap(),
-                "run_for" => run_for = value.parse().unwrap(),
-                _ => eprintln!("Unknown argument: {}", key),
+            "reson_file" => reson_file = value.to_string(),
+            "start_time" => start_time = DateTime::parse_from_rfc3339(value).unwrap().with_timezone(&Utc),
+            "write_every" => write_every = value.parse().unwrap(),
+            "run_for" => run_for = value.parse().unwrap(),
+            _ => eprintln!("Unknown argument: {}", key),
             }
         }
     }
