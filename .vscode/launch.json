@@ -19,7 +19,7 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": ["run_for=86400000"],
             "cwd": "${workspaceFolder}"
         },
         {

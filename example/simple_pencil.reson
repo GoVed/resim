@@ -8,31 +8,32 @@ cad
 wood
     resource
     unit gram
-    max 100000
+    max 1000000
 
 wood_intake
     process
     use
-        cad 50
+        cad 150
     produce
-        wood 30000
-    period 1 d 
+        wood 300000
+    period 5 h
     period_delta 9 h
     constraint
         w 1-5
+        h 6-18
 
 # Graphite is supplied 100 kg on every monday 9 am and storage capacity is 500 kgs. Cost is 100 CAD.
 graphite
     resource
     unit gram
-    max 500000
+    max 1000000
 
 graphite_intake
     process
     use
         cad 100
     produce 
-        graphite 100000
+        graphite 300000
     period 1 w 
     period_delta 9 h
 
@@ -52,7 +53,7 @@ pencil
 pencil_machine
     resource
     unit count
-    max 2
+    max 3
     life 5 y
 
 pencil_machine_intake
@@ -67,12 +68,12 @@ pencil_machine_intake
 manufacture_pencil
     process
     use
-        electirc_intake 0.7 
+        electirc_intake 0.07 
         wood 10
         graphite 2
     produce
-        pencil 10
-    catalyze
+        pencil 2
+    catalyze 2
         pencil_machine 1
     period 1 s
     constraint 
@@ -82,10 +83,10 @@ manufacture_pencil
 sell_pencil
     process
     use
-        pencil 10000
+        pencil 5000
     produce
         cad 50
-    period 3 h
+    period 30 m
     constraint 
         w 1-5
         h 10-16

@@ -25,11 +25,12 @@ impl Default for Resource {
     }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Process {
     pub input: IndexMap<String, f64>,
     pub output: IndexMap<String, f64>,
     pub catalyst: IndexMap<String, f64>,
+    pub max_catalyst: u64,
     pub period: u64,
     pub period_delta: u64,
     pub constraint: Vec<Vec<[u64;2]>>,
@@ -37,4 +38,22 @@ pub struct Process {
     pub on_use: f64,
     pub on_use_accumulate: f64,
     pub on_use_accumulate_for_writer: f64,
+}
+
+impl Default for Process {
+    fn default() -> Self {
+        Process {
+            input: IndexMap::new(),
+            output: IndexMap::new(),
+            catalyst: IndexMap::new(),
+            max_catalyst: 1,
+            period: 0,
+            period_delta: 0,
+            constraint: Vec::new(),
+            constraint_modulo: Vec::new(),
+            on_use: 0.0,
+            on_use_accumulate: 0.0,
+            on_use_accumulate_for_writer: 0.0,
+        }
+    }
 }

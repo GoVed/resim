@@ -116,6 +116,9 @@ where
                 parse_resource_list(&mut *iter, line_indentation, &mut process.input);
             }
             "catalyze" => {
+                if tokens.len() > 1 {
+                    process.max_catalyst = tokens[1].parse().unwrap();
+                }
                 parse_resource_list(&mut *iter, line_indentation, &mut process.catalyst);
             }
             "period" => {

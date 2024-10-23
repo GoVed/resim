@@ -121,31 +121,41 @@ impl Simulation {
 
     fn run_processes(&mut self) {
         for (_, process) in &self.processes {
-            if self.can_process_run(process) {
+            let can_run = self.times_process_can_run(process);            
+            if can_run > 0 {
                 for (resource_name, amount) in &process.input {
                     if let Some(resource) = self.resources.get_mut(resource_name) {
-                        resource.amount -= amount;
+                        resource.amount -= amount * can_run as f64;
                         // Deduct the decayed amount from the latest decay if exists
                         if resource.decay_at.len() > 0 {
-                            resource.decay_amount[0] -= amount;
+                            let mut amount_to_deduct = amount * can_run as f64;
+                            for i in 0..resource.decay_at.len() {
+                                resource.decay_amount[i] -= amount_to_deduct;
+                                if resource.decay_amount[i] < 0.0 {
+                                    amount_to_deduct = -1.0 * resource.decay_amount[i];
+                                    resource.decay_amount[i] = 0.0;
+                                } else {
+                                    break;
+                                }
+                            }
                         }
                     } else if let Some(resource) = self.on_use_processes.get_mut(resource_name) {
-                        resource.on_use_accumulate += amount;
+                        resource.on_use_accumulate += amount * can_run as f64;
                     }
                 }
                 for (resource_name, amount) in &process.catalyst {
                     if let Some(resource) = self.resources.get_mut(resource_name) {
-                        resource.amount_used_as_catalyst += amount;
+                        resource.amount_used_as_catalyst += amount * can_run as f64;
                     }
                 }
     
                 // Add output resources
                 for (resource_name, amount) in &process.output {
                     if let Some(resource) = self.resources.get_mut(resource_name) {
-                        resource.amount += amount;
+                        resource.amount += amount * can_run as f64;
                         if resource.life > 0 {
                             resource.decay_at.push(self.time.timestamp() as u64 + resource.life);
-                            resource.decay_amount.push(*amount);
+                            resource.decay_amount.push(*amount * can_run as f64);
                         }
                     }
                 }
@@ -154,47 +164,67 @@ impl Simulation {
     }
     
 
-    fn can_process_run(&self, process: &Process) -> bool {
+    fn times_process_can_run(&self, process: &Process) -> u64 {
         // Check if the time is right for the process along with the constraints
         if !self.time_period_check(process.period, process.period_delta) {
-            return false;
+            return 0;
         }
         if !self.constraint_check(&process.constraint, &process.constraint_modulo) {
-            return false;
+            return 0;
         }
+
+        // Check if the process has enough catalyst resources
+        let mut can_run = process.max_catalyst;
+        for (resource_name, amount) in &process.catalyst {
+            if let Some(resource) = self.resources.get(resource_name) {
+                let amount_can_use = ((resource.amount - resource.amount_used_as_catalyst) / *amount) as u64;
+                if amount_can_use < can_run {
+                    can_run = amount_can_use;
+                }
+                if can_run == 0 {
+                    return 0;
+                }
+            } else {
+                return 0;
+            }
+        }
+
         // Check if the process has enough input resources
         for (resource_name, amount) in &process.input {
             if let Some(resource) = self.resources.get(resource_name) {
-                if resource.amount - resource.amount_used_as_catalyst < *amount {
-                    return false;
+                let amount_can_use = (resource.amount - resource.amount_used_as_catalyst) / *amount;
+                if amount_can_use < can_run as f64 {
+                    can_run = amount_can_use as u64;
                 }
-            } else if let Some(on_use_process) = self.on_use_processes.get(resource_name) {
-                if on_use_process.on_use_accumulate + *amount > 0.0 {
-                    return false;
+                if can_run == 0 {
+                    return 0;
                 }
-            } else {
-                return false;                
-            }
-        }
-        // Check if the process has enough catalyst resources
-        for (resource_name, amount) in &process.catalyst {
-            if let Some(resource) = self.resources.get(resource_name) {
-                if resource.amount - resource.amount_used_as_catalyst < *amount {
-                    return false;
+            } else if let Some(on_use_process) = self.on_use_processes.get(resource_name) {                
+                let amount_can_use = -1.0 * on_use_process.on_use_accumulate / *amount;
+                if amount_can_use < can_run as f64 {
+                    can_run = amount_can_use as u64;
+                }
+                if can_run == 0 {
+                    return 0;
                 }
             } else {
-                return false;
+                return 0;                
             }
         }
+        
         // Chech if output resources are not exceeding their maximum
         for (resource_name, amount) in &process.output {
             if let Some(resource) = self.resources.get(resource_name) {
-                if resource.amount + amount > resource.max {
-                    return false;
+                let amount_can_use = (resource.max - resource.amount) / *amount;
+                if amount_can_use < can_run as f64 {
+                    can_run = amount_can_use as u64;
+                }
+                if can_run == 0 {
+                    return 0;
                 }
             }
         }
-        true
+        can_run
     }
 
     fn time_period_check(&self, period: u64, period_delta: u64) -> bool {
