@@ -5,6 +5,7 @@ use std::io::{self, BufRead};
 use std::path::Path;
 use std::iter::Peekable;
 
+// Function to parse the simulation file and return resources, processes, and on-use processes
 pub fn parse_simulation_file(filename: &str) -> io::Result<(IndexMap<String, Resource>, IndexMap<String, Process>, IndexMap<String, Process>)> {
     let path = Path::new(filename);
     let file = File::open(&path)?;
@@ -37,16 +38,15 @@ pub fn parse_simulation_file(filename: &str) -> io::Result<(IndexMap<String, Res
             } else {
                 processes.insert(name.clone(), process);
             }
-        }
-        else {
-            name = line;
+        } else {
+            name = line; // Update the name for the next resource or process
         }
     }
 
     Ok((resources, processes, on_use_processes))
 }
 
-// Updated resource parsing function
+// Function to parse a resource from the file
 fn parse_resource<I>(iter: &mut Peekable<I>, start_indentation: usize) -> Resource
 where
     I: Iterator<Item = String>,
@@ -60,7 +60,7 @@ where
         }
         let line_indentation = line.chars().take_while(|&c| c == ' ').count();
         if line_indentation <= start_indentation {
-            return resource;
+            return resource; // Return the resource if indentation level is less than or equal to start_indentation
         }
         let line = iter.next().unwrap().trim().to_string();
     
@@ -88,7 +88,7 @@ where
     resource
 }
 
-// Updated process parsing function
+// Function to parse a process from the file
 fn parse_process<I>(iter: &mut Peekable<I>, start_indentation: usize) -> Process
 where
     I: Iterator<Item = String>,
@@ -102,7 +102,7 @@ where
         }
         let line_indentation = line.chars().take_while(|&c| c == ' ').count();
         if line_indentation <= start_indentation {
-            return process;
+            return process; // Return the process if indentation level is less than or equal to start_indentation
         }
         let line = iter.next().unwrap().trim().to_string();
         
@@ -148,6 +148,7 @@ where
     process
 }
 
+// Function to parse a list of resources
 fn parse_resource_list<I>(iter: &mut Peekable<I>, start_indentation: usize, indexmap_to_add: &mut IndexMap<String, f64>)
 where
     I: Iterator<Item = String>,
@@ -159,7 +160,7 @@ where
         }
         let line_indentation = line.chars().take_while(|&c| c == ' ').count();
         if line_indentation <= start_indentation {
-            return;
+            return; // Return if indentation level is less than or equal to start_indentation
         }
         let line = iter.next().unwrap().trim().to_string();
         let tokens: Vec<&str> = line.split_whitespace().collect();
@@ -173,7 +174,8 @@ where
     }
 }
 
-fn parse_time_string(num:&str, period:&str) -> u64{
+// Function to parse a time string into seconds
+fn parse_time_string(num: &str, period: &str) -> u64 {
     let num: u64 = num.parse().unwrap();
     match period {
         "s" => num,
@@ -186,11 +188,12 @@ fn parse_time_string(num:&str, period:&str) -> u64{
     }
 }
 
-fn parse_constraint<I>(iter: &mut Peekable<I>, start_indentation: usize) -> (Vec<Vec<[u64;2]>>, Vec<u64>)
+// Function to parse constraints
+fn parse_constraint<I>(iter: &mut Peekable<I>, start_indentation: usize) -> (Vec<Vec<[u64; 2]>>, Vec<u64>)
 where
     I: Iterator<Item = String>,
 {
-    let mut constraint: Vec<Vec<[u64;2]>> = Vec::new();
+    let mut constraint: Vec<Vec<[u64; 2]>> = Vec::new();
     let mut constraint_modulo: Vec<u64> = Vec::new();
     while let Some(line) = iter.peek() {
         if line.is_empty() || line.starts_with('#') || line.chars().all(char::is_whitespace) {
@@ -199,11 +202,11 @@ where
         }
         let line_indentation = line.chars().take_while(|&c| c == ' ').count();
         if line_indentation <= start_indentation {
-            return (constraint, constraint_modulo);
+            return (constraint, constraint_modulo); // Return if indentation level is less than or equal to start_indentation
         }
         let line = iter.next().unwrap().trim().to_string();
         let tokens: Vec<&str> = line.split_whitespace().collect();
-        let mut ranges: Vec<[u64;2]> = Vec::new();
+        let mut ranges: Vec<[u64; 2]> = Vec::new();
         let mut multiplier = 0;
         let mut delta = 0;
         match tokens[0] {
@@ -228,16 +231,15 @@ where
             _ => {
                 println!("Unknown token: {}", tokens[0]);
             }
-            
         }
         for i in 1..tokens.len() {
             let mut range: [u64; 2] = [0, 0];
             let range_tokens: Vec<&str> = tokens[i].split('-').collect();
             range[0] = (range_tokens[0].parse::<u64>().unwrap() + delta) * multiplier;
             if range_tokens.len() == 1 {
-            range[1] = range[0] + multiplier - 1;
+                range[1] = range[0] + multiplier - 1;
             } else {
-            range[1] = ((range_tokens[1].parse::<u64>().unwrap() + 1) + delta) * multiplier - 1;
+                range[1] = ((range_tokens[1].parse::<u64>().unwrap() + 1) + delta) * multiplier - 1;
             }
             range[0] %= constraint_modulo.last().unwrap();
             range[1] %= constraint_modulo.last().unwrap();

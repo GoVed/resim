@@ -2,6 +2,8 @@ use std::time;
 use indexmap::IndexMap;
 use crate::resource::{Process, Resource};
 use chrono::prelude::*;
+
+/// Represents a simulation with resources, processes, and time tracking.
 pub struct Simulation {
     pub resources: IndexMap<String, Resource>,
     pub processes: IndexMap<String, Process>,
@@ -13,11 +15,12 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    pub fn new(resources:IndexMap<String, Resource>, processes:IndexMap<String, Process>, on_use_processes:IndexMap<String,Process>) -> Self {
-        let mut sim  = Simulation {
-            resources: resources,
-            processes: processes,
-            on_use_processes: on_use_processes,
+    /// Creates a new simulation instance.
+    pub fn new(resources: IndexMap<String, Resource>, processes: IndexMap<String, Process>, on_use_processes: IndexMap<String, Process>) -> Self {
+        let mut sim = Simulation {
+            resources,
+            processes,
+            on_use_processes,
             time: Utc::now(),
             csv_writer: csv::Writer::from_path("output.csv").unwrap(),
             write_every: 1,
@@ -40,16 +43,18 @@ impl Simulation {
         sim
     }
 
+    /// Sets the start time of the simulation.
     pub fn set_start_time(&mut self, time: DateTime<Utc>) {
         self.time = time;
         self.last_write_time = time.timestamp() as u64;
     }
 
+    /// Runs the simulation for a given duration.
     pub fn run(&mut self, duration: u64) {
         let start_time_nanoseconds = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap().as_nanos();
         for time_in_s in 0..duration {
             self.simulate_tick();
-            //Adding one second to the time
+            // Adding one second to the time
             self.time = self.time + chrono::Duration::seconds(1);
             if time_in_s % self.write_every == 0 {
                 self.write_current_state_to_csv();
@@ -59,26 +64,17 @@ impl Simulation {
         println!("Simulation took {} seconds", (end_time_nanoseconds - start_time_nanoseconds) as f64 / 1_000_000_000.0);
     }
 
+    /// Simulates a single tick of the simulation.
     fn simulate_tick(&mut self) {
-        // Decay resources
         self.decay_resources();
-        
-        // Deduct resources for on_use_processes at the start
         self.deduct_on_use_processes();
-
-        // Set the amount_used_as_catalyst to 0
         self.reset_amount_used_as_catalyst();
-    
-        // Run processes
         self.run_processes();
-    
-        // Add back the remaining amount for on_use_processes at the end
         self.add_back_on_use_processes();
-
-        // Update the min, max and avg values for resources
         self.update_resource_min_max_avg();
     }
 
+    /// Updates the minimum, maximum, and average values for resources.
     fn update_resource_min_max_avg(&mut self) {
         for resource in self.resources.values_mut() {
             if resource.amount < resource.resource_min_for_writer {
@@ -91,6 +87,7 @@ impl Simulation {
         }
     }
 
+    /// Deducts resources for on-use processes at the start.
     fn deduct_on_use_processes(&mut self) {
         for (_, process) in &mut self.on_use_processes {
             let mut feasible = true;
@@ -115,28 +112,31 @@ impl Simulation {
         }
     }
 
+    /// Resets the amount used as a catalyst for all resources.
     fn reset_amount_used_as_catalyst(&mut self) {
         for (_, resource) in &mut self.resources {
             resource.amount_used_as_catalyst = 0.0;
         }
     }
 
+    /// Adds back the remaining amount for on-use processes at the end.
     fn add_back_on_use_processes(&mut self) {
-        for (_, process) in &mut self.on_use_processes {            
+        for (_, process) in &mut self.on_use_processes {
             for (resource_name, amount) in &process.input {
                 if let Some(resource) = self.resources.get_mut(resource_name) {
                     let addition = -1.0 * amount * process.on_use_accumulate / process.on_use;
                     resource.amount += addition;
                 }
             }
-            process.on_use_accumulate_for_writer += process.on_use_accumulate+process.on_use;
+            process.on_use_accumulate_for_writer += process.on_use_accumulate + process.on_use;
         }
     }
 
+    /// Decays resources based on their decay schedule.
     fn decay_resources(&mut self) {
         let now = self.time.timestamp() as u64;
         for (_, resource) in &mut self.resources {
-            while resource.decay_at.len() > 0 && resource.decay_at[0] <= now {
+            while !resource.decay_at.is_empty() && resource.decay_at[0] <= now {
                 resource.amount -= resource.decay_amount[0];
                 resource.decay_at.remove(0);
                 resource.decay_amount.remove(0);
@@ -144,15 +144,16 @@ impl Simulation {
         }
     }
 
+    /// Runs all processes in the simulation.
     fn run_processes(&mut self) {
         for (_, process) in &self.processes {
-            let can_run = self.times_process_can_run(process);            
+            let can_run = self.times_process_can_run(process);
             if can_run > 0 {
                 for (resource_name, amount) in &process.input {
                     if let Some(resource) = self.resources.get_mut(resource_name) {
                         resource.amount -= amount * can_run as f64;
                         // Deduct the decayed amount from the latest decay if exists
-                        if resource.decay_at.len() > 0 {
+                        if !resource.decay_at.is_empty() {
                             let mut amount_to_deduct = amount * can_run as f64;
                             for i in 0..resource.decay_at.len() {
                                 resource.decay_amount[i] -= amount_to_deduct;
@@ -173,7 +174,7 @@ impl Simulation {
                         resource.amount_used_as_catalyst += amount * can_run as f64;
                     }
                 }
-    
+
                 // Add output resources
                 for (resource_name, amount) in &process.output {
                     if let Some(resource) = self.resources.get_mut(resource_name) {
@@ -187,8 +188,8 @@ impl Simulation {
             }
         }
     }
-    
 
+    /// Determines how many times a process can run based on available resources and constraints.
     fn times_process_can_run(&self, process: &Process) -> u64 {
         // Check if the time is right for the process along with the constraints
         if !self.time_period_check(process.period, process.period_delta) {
@@ -224,7 +225,7 @@ impl Simulation {
                 if can_run == 0 {
                     return 0;
                 }
-            } else if let Some(on_use_process) = self.on_use_processes.get(resource_name) {                
+            } else if let Some(on_use_process) = self.on_use_processes.get(resource_name) {
                 let amount_can_use = -1.0 * on_use_process.on_use_accumulate / *amount;
                 if amount_can_use < can_run as f64 {
                     can_run = amount_can_use as u64;
@@ -233,11 +234,11 @@ impl Simulation {
                     return 0;
                 }
             } else {
-                return 0;                
+                return 0;
             }
         }
-        
-        // Chech if output resources are not exceeding their maximum
+
+        // Check if output resources are not exceeding their maximum
         for (resource_name, amount) in &process.output {
             if let Some(resource) = self.resources.get(resource_name) {
                 let amount_can_use = (resource.max - resource.amount) / *amount;
@@ -252,16 +253,14 @@ impl Simulation {
         can_run
     }
 
+    /// Checks if the current time is within the process's period constraints.
     fn time_period_check(&self, period: u64, period_delta: u64) -> bool {
         let now = self.time.timestamp() as u64;
-
-        if (now - period_delta) % period == 0 {
-            return true;
-        }
-        false
+        (now - period_delta) % period == 0
     }
 
-    fn constraint_check(&self, constraint: &Vec<Vec<[u64;2]>>, constraint_modulo: &Vec<u64>) -> bool {
+    /// Checks if the current time satisfies the process's constraints.
+    fn constraint_check(&self, constraint: &Vec<Vec<[u64; 2]>>, constraint_modulo: &Vec<u64>) -> bool {
         let now = self.time.timestamp() as u64;
         for (i, constraint_list) in constraint.iter().enumerate() {
             let modulo = constraint_modulo[i];
@@ -280,7 +279,8 @@ impl Simulation {
         }
         true
     }
-    
+
+    /// Displays the current state of resources.
     pub fn display_state(&self) {
         println!("Current state of resources at time {}s:", self.time);
         for (resource_name, resource) in &self.resources {
@@ -294,6 +294,7 @@ impl Simulation {
         }
     }
 
+    /// Writes the current state of the simulation to a CSV file.
     fn write_current_state_to_csv(&mut self) {
         // timestamp, resource_0_amount, resource_1_amount, ...
         let mut record = vec![self.time.to_string()];
