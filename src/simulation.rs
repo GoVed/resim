@@ -47,15 +47,14 @@ impl Simulation {
     }
 
     fn simulate_tick(&mut self) {
-    
+        // Decay resources
+        self.decay_resources();
+        
         // Deduct resources for on_use_processes at the start
         self.deduct_on_use_processes();
 
         // Set the amount_used_as_catalyst to 0
         self.reset_amount_used_as_catalyst();
-    
-        // Decay resources
-        self.decay_resources();
     
         // Run processes
         self.run_processes();
@@ -123,6 +122,10 @@ impl Simulation {
                 for (resource_name, amount) in &process.input {
                     if let Some(resource) = self.resources.get_mut(resource_name) {
                         resource.amount -= amount;
+                        // Deduct the decayed amount from the latest decay if exists
+                        if resource.decay_at.len() > 0 {
+                            resource.decay_amount[0] -= amount;
+                        }
                     } else if let Some(resource) = self.on_use_processes.get_mut(resource_name) {
                         resource.on_use_accumulate += amount;
                     }
