@@ -78,9 +78,10 @@ process_name
         .
         .
     period repeated_time_at_which_process_is_executed [s,h,m,d,w,y]
+    period_delta delta_after_which_the_process_is_executed [s,h,m,d,w,y]
     constraint // optional
-        [s,h,m,d,w,y] at
-        [s,h,m,d,w,y] start-end
+        [s,h,m,w] at
+        [s,h,m,w] start-end
         .
         .
 ```
