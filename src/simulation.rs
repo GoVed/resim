@@ -97,14 +97,14 @@ impl Simulation {
     }
 
     fn add_back_on_use_processes(&mut self) {
-        for (_, process) in &self.on_use_processes {            
+        for (_, process) in &mut self.on_use_processes {            
             for (resource_name, amount) in &process.input {
                 if let Some(resource) = self.resources.get_mut(resource_name) {
                     let addition = -1.0 * amount * process.on_use_accumulate / process.on_use;
                     resource.amount += addition;
                 }
             }
-            
+            process.on_use_accumulate_for_writer += process.on_use_accumulate+process.on_use;
         }
     }
 
@@ -245,8 +245,9 @@ impl Simulation {
         for resource in self.resources.values() {
             record.push(resource.amount.to_string());
         }
-        for process in self.on_use_processes.values() {
-            record.push((process.on_use_accumulate + process.on_use).to_string());
+        for process in self.on_use_processes.values_mut() {
+            record.push(process.on_use_accumulate_for_writer.to_string());
+            process.on_use_accumulate_for_writer = 0.0;
         }
         self.csv_writer.write_record(&record).unwrap();
     }

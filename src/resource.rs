@@ -35,5 +35,6 @@ pub struct Process {
     pub constraint: Vec<Vec<[u64;2]>>,
     pub constraint_modulo: Vec<u64>,
     pub on_use: f64,
-    pub on_use_accumulate: f64
+    pub on_use_accumulate: f64,
+    pub on_use_accumulate_for_writer: f64,
 }
