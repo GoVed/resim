@@ -27,6 +27,9 @@ impl Simulation {
         for resource_name in sim.resources.keys() {
             headers.push(resource_name.clone());
         }
+        for process_name in sim.on_use_processes.keys() {
+            headers.push(process_name.clone());
+        }
         sim.csv_writer.write_record(&headers).unwrap();
 
         sim
@@ -241,6 +244,9 @@ impl Simulation {
         let mut record = vec![self.time.to_string()];
         for resource in self.resources.values() {
             record.push(resource.amount.to_string());
+        }
+        for process in self.on_use_processes.values() {
+            record.push((process.on_use_accumulate + process.on_use).to_string());
         }
         self.csv_writer.write_record(&record).unwrap();
     }
